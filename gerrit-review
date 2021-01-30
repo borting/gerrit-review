@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#   This is a wrapper for "gerrit review", one of the Gerrit Cmdline
+# Tools (https://review.opendev.org/Documentation/cmd-review.html).
+# For simplicity, this wrapper only wraps "gerrit review" command for
+# daily use, like verify/review/comment/submit/abandon/rebase changes.
+#
+# Copyright (C) 2021 Borting Chen <bortingchen@gmail.com>.
+#
+# This file is licensed under the terms of Apache License 2.0.
+#
+
+import argparse
+import re
+import subprocess
+import sys
+
+from configparser import ConfigParser
+from urllib.parse import urlparse
+
+defaultRemote = "origin"
+defaultGitCfg = ".git/config"
+remoteList = {}
+
+def _checkVerifyValue(value):
+    string = str(value)
+    if value in ["-1", "0", "+1", ""]:
+        return string
+    else:
+        raise argparse.ArgumentTypeError("{} (should be -1/0/+1)".format(string))
+
+def _checkReviewValue(value):
+    string = str(value)
+    if value in ["-2", "-1", "0", "+1", "+2", ""]:
+        return string
+    else:
+        raise argparse.ArgumentTypeError("{} (should be -2/-1/0/+1/+2)".format(string))
+
+def _parseSysArgv(argv):
+    parser = argparse.ArgumentParser(argv[0])
+    parser.add_argument('--remote', type=str, help="Path to output directory/file", default=defaultRemote, dest="remote", metavar="REMOTE")
+    parser.add_argument('-v', '--verified', type=_checkVerifyValue, help="Verified (-1/0/+1)", default="", dest="verify", metavar="VERIFY")
+    parser.add_argument('-c', '--code-review', type=_checkReviewValue, help="Code Review (-2/-1/0/+1/+2)", default="", dest="review", metavar="REVIEW")
+    parser.add_argument('-m', '--message', type=str, help="Review Message", default="", dest="message", metavar="MESSAGE")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-s', '--submit', action="store_true", help="Submit change", dest="submit")
+    group.add_argument('-a', '--abandon', action="store_true", help="Abandon change", dest="abandon")
+    group.add_argument('-R', '--rebase', action="store_true", help="Rebase change", dest="rebase")
+
+    parser.add_argument('--verbose', action="store_true", help="Show command send to server", dest="verbose")
+    parser.add_argument('change', type=str, help="Commit or ChangeID,PatchSet", metavar="CHANGE")
+
+    return vars(parser.parse_args(argv[1:]))
+
+# Parse remote section in git config and store remote info to remoteList
+def _parseGitCfg(cfgFile):
+    with open(cfgFile, 'r') as cfgFd:
+        gitCfg = ConfigParser()
+        gitCfg.read_file(cfgFd)
+
+        for section in gitCfg:
+            if re.search("^remote", section):
+                name = section.split('"')[1]
+                remoteList.update({name: gitCfg[section]})
+
+def _genReviewCmd(url, review):
+    # Add Gerrit server info and porject to cmd
+    cmd = ["ssh", url.hostname, "gerrit", "review"]
+    if url.port:
+        cmd = [cmd[0], "-p", str(url.port)] + cmd[1:]
+    if url.path:
+        cmd += ["--project", url.path[1:]]
+
+    # Add review results to cmd
+    if review["verify"]:
+        cmd += ["--verified", review["verify"]]
+    if review["review"]:
+        cmd += ["--code-review", review["review"]]
+    if review["message"]:
+        cmd += ["--message", '"\'' + review["message"] + '\'"']
+    if review["submit"]:
+        cmd += ["--submit"]
+    if review["abandon"]:
+        cmd += ["--abandon"]
+    if review["rebase"]:
+        cmd += ["--rebase"]
+    cmd += [review["change"]]
+
+    if review["verbose"]:
+        print(" ".join(cmd))
+
+    return cmd
+
+def _sendReview(cmd):
+    try:
+        subprocess.call(cmd)
+        return 0
+    except FileNotFoundError as err:
+        print("Command {} not found".format(cmd[0]))
+    except subprocess.SubprocessError as err:
+        print("Exec error ({}): {}".format(err.returncode, err.stderr))
+
+    return 2
+
+if __name__ == "__main__":
+    # Parse input parameters
+    argv = _parseSysArgv(sys.argv)
+
+    # Parse remote info from git config
+    remote = argv["remote"]
+    del argv["remote"]
+
+    try:
+        _parseGitCfg(defaultGitCfg)
+        #print(remoteList)
+    except FileNotFoundError as err:
+        print("Error: '{}' not found.".format(err.filename))
+        sys.exit(1);
+
+    # Check remote exists in git config
+    if remote not in remoteList.keys():
+        print("Error: remote '{}' not found.".format(remote))
+        sys.exit(1)
+
+    # Retrieve url of review server
+    try:
+        url = urlparse(remoteList[remote]["url"])
+    except KeyError as err:
+        print("Error: No url KeyErrorspecified for remote '{}'.".format(remote))
+        sys.exit(1)
+
+    # Generate cmd and send review results to Gerrit server
+    cmd = _genReviewCmd(url, argv)
+    retval = _sendReview(cmd)
+
+    sys.exit(retval)
+
