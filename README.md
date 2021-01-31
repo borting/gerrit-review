@@ -7,19 +7,19 @@ A wrapper for the [review cmd](https://gerrit-review.googlesource.com/Documentat
 The wrapper supports only parts of, but widely used, options of the original [review cmd](https://gerrit-review.googlesource.com/Documentation/cmd-review.html), which includes:
 * Score changes
 * Write comments
-* Rebase/abandon/submit changes
+* Submit/rebase/abandon changes
 
 ## Usage
 
 ```bash
-$ gerrit-review [--remote REMOTE] [-v VERIFY] [-c REVIEW] [-m MESSAGE] [-s] [-a] [-R] CHANGE
+$ gerrit-review [--remote REMOTE] [-v VERIFY] [-c REVIEW] [-m MESSAGE] [-s] [-R] [-a] CHANGE_SPECIFIER
 ```
 
 ### Options
 
 ```
 positional arguments:
-  CHANGE                          Commit SHA-1 or ChangeID,PatchSet
+  CHANGE_SPECIFIER                Commit SHA-1 or ChangeID,PatchSet
 
 optional arguments:
   --remote REMOTE                 Git remote hosting Gerrit review server, default 'origin'
@@ -27,14 +27,14 @@ optional arguments:
   -c SCORE, --code-review SCORE   Code review score (-2/-1/0/+1/+2)
   -m MESSAGE, --message MESSAGE   Review Message
   -s, --submit                    Submit change
-  -a, --abandon                   Abandon change
   -R, --rebase                    Rebase change
+  -a, --abandon                   Abandon change
   --verbose                       Display command send to Gerrit review server
   -h, --help                      Show help message
 ```
 
 ### Remote Configuration
-If Gerrit review server is hosted on remote other `origin`, you can set up the remote parsed by `gerrit-review` by default.
+If Gerrit review server is hosted on remote other `origin`, you can set the default remote parsed by `gerrit-review`.
 ```bash
 $ git config gerritcli.remote REMOTE_NAME
 ```
@@ -64,16 +64,15 @@ $ gerrit-review -v +1 -c +2 -s a5782bf
 
 ### Rebase change 1234, patchset 5
 
-Note that the change specifier (patchset number and commit ID) are renewed after sucessful rebase, and the new change specifier must be used in the follow-up commands.
-(You can fetch new change sprifier from Gerrit review server by `git review -d CHANGE_ID`.)
+Note that the change specifier (patchset number and commit SHA-1) are renewed after a sucessful rebase, and the new change specifier must be used in the follow-up commands.
+You can fetch new change specifier from Gerrit review server by `git review -d CHANGE_ID`.
 ```bash
 $ gerrit-review --rebase 1234
 ```
 
 ### Specify remote manually
 
-You can manually specify the remote name that `gerrit-review` parses conection info from.
-Note that gerrit-review follows the following priority to parse the connection info of Gerrit review server: (1) remote specifed by `--remote`, (2) remote specified in `gerritcli.remote`, (3) `origin` remote.
+Note that `gerrit-review` chooses the remote to parse connection info based on the following priority: (1) remote specifed by `--remote`, (2) remote specified in `gerritcli.remote`, (3) the `origin` remote.
 ```bash
 $ gerrit-review --remote gerrit -v +1 -c +2 5432,1
 ```
