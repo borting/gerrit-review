@@ -19,17 +19,17 @@ $ gerrit-review [--remote REMOTE] [-v VERIFY] [-c REVIEW] [-m MESSAGE] [-s] [-a]
 
 ```
 positional arguments:
-  CHANGE                          Commit or ChangeID,PatchSet
+  CHANGE                          Commit SHA-1 or ChangeID,PatchSet
 
 optional arguments:
-  --remote REMOTE                 Remote specifying info of review server and project path
-  -v SCORE, --verified SCORE      Verified scoew (-1/0/+1)
+  --remote REMOTE                 Remote of review server and project path
+  -v SCORE, --verified SCORE      Verified score (-1/0/+1)
   -c REVIEW, --code-review SCORE  Code Review score (-2/-1/0/+1/+2)
   -m MESSAGE, --message MESSAGE   Review Message
   -s, --submit                    Submit change
   -a, --abandon                   Abandon change
   -R, --rebase                    Rebase change
-  --verbose                       Show command send to server
+  --verbose                       Display command send to server
   -h, --help                      Show help message
 ```
 
