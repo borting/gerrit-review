@@ -21,7 +21,6 @@ from urllib.parse import urlparse
 
 defaultRemote = "origin"
 defaultGitCfg = ".git/config"
-remoteList = {}
 
 def _checkVerifyValue(value):
     string = str(value)
@@ -39,7 +38,7 @@ def _checkReviewValue(value):
 
 def _parseSysArgv(argv):
     parser = argparse.ArgumentParser(argv[0])
-    parser.add_argument('--remote', type=str, help="Path to output directory/file", default=defaultRemote, dest="remote", metavar="REMOTE")
+    parser.add_argument('--remote', type=str, help="Path to output directory/file", default="", dest="remote", metavar="REMOTE")
     parser.add_argument('-v', '--verified', type=_checkVerifyValue, help="Verified (-1/0/+1)", default="", dest="verify", metavar="VERIFY")
     parser.add_argument('-c', '--code-review', type=_checkReviewValue, help="Code Review (-2/-1/0/+1/+2)", default="", dest="review", metavar="REVIEW")
     parser.add_argument('-m', '--message', type=str, help="Review Message", default="", dest="message", metavar="MESSAGE")
@@ -56,14 +55,24 @@ def _parseSysArgv(argv):
 
 # Parse remote section in git config and store remote info to remoteList
 def _parseGitCfg(cfgFile):
+    gerritCli = None
+    remoteList = {}
+
     with open(cfgFile, 'r') as cfgFd:
         gitCfg = ConfigParser()
         gitCfg.read_file(cfgFd)
 
         for section in gitCfg:
+            # Overwrite defaultRemote if gerritcli is set
+            if re.search("^gerritcli", section):
+                gerritCli = gitCfg[section]
+
+            # Store all remotes in git config
             if re.search("^remote", section):
                 name = section.split('"')[1]
                 remoteList.update({name: gitCfg[section]})
+
+    return [gerritCli, remoteList]
 
 def _genReviewCmd(url, review):
     # Add Gerrit server info and porject to cmd
@@ -108,16 +117,20 @@ if __name__ == "__main__":
     # Parse input parameters
     argv = _parseSysArgv(sys.argv)
 
-    # Parse remote info from git config
-    remote = argv["remote"]
-    del argv["remote"]
-
+    # Parse git config
     try:
-        _parseGitCfg(defaultGitCfg)
-        #print(remoteList)
+        gerritCli, remoteList = _parseGitCfg(defaultGitCfg)
     except FileNotFoundError as err:
         print("Error: '{}' not found.".format(err.filename))
         sys.exit(1);
+
+    # Determin which remote is used as reviewer server
+    if argv["remote"]:
+        remote = argv["remote"]
+    elif gerritCli and gerritCli["remote"]:
+        remote = gerritCli["remote"]
+    else:
+        remote = defaultRemote
 
     # Check remote exists in git config
     if remote not in remoteList.keys():
