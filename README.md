@@ -22,7 +22,7 @@ positional arguments:
   CHANGE                          Commit or ChangeID,PatchSet
 
 optional arguments:
-  --remote REMOTE                 Path to output directory/file
+  --remote REMOTE                 Remote specifying info of review server and project path
   -v SCORE, --verified SCORE      Verified scoew (-1/0/+1)
   -c REVIEW, --code-review SCORE  Code Review score (-2/-1/0/+1/+2)
   -m MESSAGE, --message MESSAGE   Review Message
