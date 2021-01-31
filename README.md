@@ -3,7 +3,7 @@ A wrapper for the [review cmd](https://gerrit-review.googlesource.com/Documentat
 
 ## Introduction
 
-gerrit-review wrapper automatically parses the connection info of review server and project path from the `origin` remote in `.git/config` to save time on entering repeating commands.
+gerrit-review wrapper automatically parses the connection info of review server and project path from `origin` remote in `.git/config` to save reviewers time entering repeating commands.
 The wrapper supports only parts of, but widely used, options of the original [review cmd](https://gerrit-review.googlesource.com/Documentation/cmd-review.html), which includes:
 * Score changes
 * Write comments
