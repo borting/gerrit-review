@@ -38,9 +38,9 @@ def _checkReviewValue(value):
 
 def _parseSysArgv(argv):
     parser = argparse.ArgumentParser(argv[0])
-    parser.add_argument('--remote', type=str, help="Path to output directory/file", default="", dest="remote", metavar="REMOTE")
-    parser.add_argument('-v', '--verified', type=_checkVerifyValue, help="Verified (-1/0/+1)", default="", dest="verify", metavar="VERIFY")
-    parser.add_argument('-c', '--code-review', type=_checkReviewValue, help="Code Review (-2/-1/0/+1/+2)", default="", dest="review", metavar="REVIEW")
+    parser.add_argument('--remote', type=str, help="Git remote hosting review server", default="", dest="remote", metavar="REMOTE")
+    parser.add_argument('-v', '--verified', type=_checkVerifyValue, help="Verified (-1/0/+1)", default="", dest="verify", metavar="SCORE")
+    parser.add_argument('-c', '--code-review', type=_checkReviewValue, help="Code Review (-2/-1/0/+1/+2)", default="", dest="review", metavar="SCORE")
     parser.add_argument('-m', '--message', type=str, help="Review Message", default="", dest="message", metavar="MESSAGE")
 
     group = parser.add_mutually_exclusive_group()
