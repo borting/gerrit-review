@@ -12,7 +12,7 @@ The wrapper supports only parts of, but widely used, options of the original [re
 ## Usage
 
 ```bash
-$ gerrit-review [-h] [--remote REMOTE] [-v VERIFY] [-c REVIEW] [-m MESSAGE] [-s | -a | -R] [--verbose] CHANGE
+$ gerrit-review [--remote REMOTE] [-v VERIFY] [-c REVIEW] [-m MESSAGE] [-s] [-a] [-R] CHANGE
 ```
 
 ### Options
