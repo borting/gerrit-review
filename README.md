@@ -34,9 +34,9 @@ optional arguments:
 ```
 
 ### Remote Configuration
-You can configure the remote parsed by gerrit-review by default, if the review server is specified in another remote.
+If the review server is specified in a remote other `origin`, you can set up the remote parsed by gerrit-review by default.
 ```bash
-$ git config gerritcli.remote REMOTENAME
+$ git config gerritcli.remote REMOTE_NAME
 ```
 
 ## Examples
