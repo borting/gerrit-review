@@ -34,16 +34,23 @@ optional arguments:
 ```
 
 ### Remote Configuration
-If the review server is specified in a remote other `origin`, you can set up the remote parsed by gerrit-review by default.
+If review server is specified in remote other `origin`, you can set up the remote parsed by gerrit-review by default.
 ```bash
 $ git config gerritcli.remote REMOTE_NAME
 ```
 
 ## Examples
 
+### Scoring commit a5782bf
+
+Note that you must add "+/-" with scores.
+```bash
+$ gerrit-review -c +2 -s a5782bf
+```
+
 ### Scoring change 1234, patchset 5 and write comments
 
-Note that you must add "+/-" with score.
+Note that patchset number must be specified.
 ```bash
 $ gerrit-review -v -1 -m "Build failed" 1234,5
 ```
