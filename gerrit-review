@@ -19,8 +19,6 @@ import sys
 from configparser import ConfigParser
 from urllib.parse import urlparse
 
-defaultRemote = "origin"
-
 def _checkVerifyValue(value):
     string = str(value)
     if value in ["-1", "0", "+1", ""]:
@@ -144,7 +142,7 @@ if __name__ == "__main__":
     elif gerritCli and gerritCli["remote"]:
         remote = gerritCli["remote"]
     else:
-        remote = defaultRemote
+        remote = "origin"
 
     # Check remote exists in git config
     if remote not in remoteList.keys():
