@@ -20,7 +20,6 @@ from configparser import ConfigParser
 from urllib.parse import urlparse
 
 defaultRemote = "origin"
-defaultGitCfg = ".git/config"
 
 def _checkVerifyValue(value):
     string = str(value)
@@ -52,6 +51,14 @@ def _parseSysArgv(argv):
     parser.add_argument('change', type=str, help="Commit SHA-1 or ChangeID,PatchSet", metavar="CHANGE_SPECIFIER")
 
     return vars(parser.parse_args(argv[1:]))
+
+def _getGitDirPath():
+    with subprocess.Popen("git rev-parse --git-dir".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
+        out, err = p.communicate()
+        if p.returncode:
+            raise Exception(err.decode("utf-8")[:-1], p.returncode)
+        else:
+            return out.decode("utf-8")[:-1]
 
 # Parse remotes and gerritcli from git config
 def _parseGitCfg(cfgFile):
@@ -117,9 +124,16 @@ if __name__ == "__main__":
     # Parse input parameters
     argv = _parseSysArgv(sys.argv)
 
+    # Find path to .git directory
+    try:
+        gitDir = _getGitDirPath()
+    except Exception as err:
+        print("Error: '{}'".format(err.args[0]))
+        sys.exit(err.args[1])
+
     # Parse git config
     try:
-        gerritCli, remoteList = _parseGitCfg(defaultGitCfg)
+        gerritCli, remoteList = _parseGitCfg(gitDir + "/config")
     except FileNotFoundError as err:
         print("Error: '{}' not found.".format(err.filename))
         sys.exit(1);
