@@ -50,8 +50,9 @@ def _parseSysArgv(argv):
 
     return vars(parser.parse_args(argv[1:]))
 
+# Find path to .git directory of this git repos
 def _getGitDirPath():
-    with subprocess.Popen("git rev-parse --git-dir".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
+    with subprocess.Popen("git rev-parse --git-common-dir".split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
         out, err = p.communicate()
         if p.returncode:
             raise Exception(err.decode("utf-8")[:-1], p.returncode)
