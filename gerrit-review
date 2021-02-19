@@ -109,7 +109,7 @@ def _genReviewCmd(url, review):
 
     return cmd
 
-def _sendReview(cmd):
+def _sendReviewCmd(cmd):
     try:
         subprocess.call(cmd)
         return 0
@@ -159,9 +159,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Generate cmd and send review results to Gerrit server
-    cmd = _genReviewCmd(url, argv)
+    reviewCmd = _genReviewCmd(url, argv)
     if not argv["dryrun"]:
-        sys.exit(_sendReview(cmd))
+        sys.exit(_sendReviewCmd(reviewCmd))
     else:
         sys.exit(0)
 
