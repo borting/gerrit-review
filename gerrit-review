@@ -46,6 +46,7 @@ def _parseSysArgv(argv):
     group.add_argument('-R', '--rebase', action="store_true", help="Rebase change", dest="rebase")
 
     parser.add_argument('--verbose', action="store_true", help="Display command send to server", dest="verbose")
+    parser.add_argument('--dry-run', action="store_true", help="Parse git config but not sending commands to server", dest="dryrun")
     parser.add_argument('change', type=str, help="Commit SHA-1 or ChangeID,PatchSet", metavar="CHANGE_SPECIFIER")
 
     return vars(parser.parse_args(argv[1:]))
@@ -103,7 +104,7 @@ def _genReviewCmd(url, review):
         cmd += ["--rebase"]
     cmd += [review["change"]]
 
-    if review["verbose"]:
+    if review["verbose"] or review["dryrun"]:
         print(" ".join(cmd))
 
     return cmd
@@ -159,7 +160,8 @@ if __name__ == "__main__":
 
     # Generate cmd and send review results to Gerrit server
     cmd = _genReviewCmd(url, argv)
-    retval = _sendReview(cmd)
-
-    sys.exit(retval)
+    if not argv["dryrun"]:
+        sys.exit(_sendReview(cmd))
+    else:
+        sys.exit(0)
 
