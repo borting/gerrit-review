@@ -12,12 +12,48 @@
 #
 
 import argparse
+import collections
 import re
 import subprocess
 import sys
 
 from configparser import ConfigParser
-from urllib.parse import urlparse
+
+GitUrl = collections.namedtuple('GitUrl', [
+    'path',
+    'schemes',
+    'scheme',
+    'hostname',
+    'username',
+    'port',
+])
+
+POSSIBLE_REGEXES = (
+    re.compile(r'(git\+)?'
+               r'((?P<scheme>\w+)://)'
+               r'((?P<username>\w+)@)?'
+               r'((?P<hostname>[\w\.\-]+))'
+               r'(:(?P<port>\d+))?'
+               r'(?P<path>[\w\-\.\/]+)'),
+    re.compile(r'^(?P<scheme>https?|git|ssh|rsync)\://'
+               r'(?:(?P<username>.+)@)*'
+               r'(?P<hostname>[a-z0-9_.-]*)'
+               r'[:/]*'
+               r'(?P<port>[\d]+){0,1}/'
+               r'(?P<path>[\w\-\.\/]+)'),
+    re.compile(r'((?P<username>\w+)@)?'
+               r'((?P<hostname>[\w\.\-]+))'
+               r'[\:\/]{1,2}'
+               r'(?P<path>[\w\-\.\/]+)'),
+    re.compile(r'^(?:(?P<username>.+)@)*'
+               r'(?P<hostname>[a-z0-9_.-]*)[:/]*'
+               r'(?P<port>[\d]+){0,1}'
+               r'(?P<path>[\w\-\.\/]+)'),
+)
+
+class ParserError(Exception):
+    """ Error raised when a URL can't be parsed. """
+    pass
 
 def _checkVerifyValue(value):
     string = str(value)
@@ -81,13 +117,42 @@ def _parseGitCfg(cfgFile):
 
     return [gerritCli, remoteList]
 
+def _getSchemes(url):
+    try:
+        index = url.index('://')
+    except ValueError:
+        return []
+
+    return url[:index].split('+')
+
+def _giturlparse(url):
+    gitUrl = {
+        'path': None,
+        'schemes': _getSchemes(url),
+        'scheme': 'ssh',
+        'hostname': None,
+        'username': None,
+        'port': None,
+    }
+
+    for regex in POSSIBLE_REGEXES:
+        match = regex.search(url)
+        if match:
+            gitUrl.update(match.groupdict())
+            break
+    else:
+        msg = "Invalid URL '{}'".format(url)
+        raise ParserError(msg)
+
+    return GitUrl(**gitUrl)
+
 def _genReviewCmd(url, review):
     # Add Gerrit server info and porject to cmd
     cmd = ["ssh", url.hostname, "gerrit", "review"]
     if url.port:
         cmd = [cmd[0], "-p", str(url.port)] + cmd[1:]
     if url.path:
-        cmd += ["--project", url.path[1:]]
+        cmd += ["--project", url.path]
 
     # Add review results to cmd
     if review["verify"]:
@@ -153,9 +218,9 @@ if __name__ == "__main__":
 
     # Retrieve url of review server
     try:
-        url = urlparse(remoteList[remote]["url"])
-    except KeyError as err:
-        print("Error: No url KeyErrorspecified for remote '{}'.".format(remote))
+        url = _giturlparse(remoteList[remote]["url"])
+    except ParserError as err:
+        print("'{}'.".format(remote))
         sys.exit(1)
 
     # Generate cmd and send review results to Gerrit server
